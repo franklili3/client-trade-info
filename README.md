@@ -3,9 +3,12 @@
 ```
 pip install -r requirements.txe
 ```
-### 2.安装empyrical库
+## 2.拉取子模块
 ```
-git clone  https://github.com/franklili3/empyrical.git
+git submodule update --init --recursive
+```
+### 3.安装empyrical库
+```
 cd empyrical
 pip install .
 ```
