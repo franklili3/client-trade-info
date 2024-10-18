@@ -8,6 +8,7 @@ from empyrical import max_drawdown, cum_returns, annual_return, annual_volatilit
 import os
 import time
 #import datetime
+from requests.exceptions import Timeout
 
 def main():
 
@@ -33,25 +34,30 @@ def main():
         secret = item['secret']
         
         exchange = ccxt.binance({
-        'enableRateLimit': True,  # enabled by default
+        'enableRateLimit': True,
+        #'timeout': 30000,
+        #'proxies': {
+        #    'http': 'http://127.0.0.1:10818',
+        #    'https': 'http://127.0.0.1:10818',
+        #},
         })#config
         #exchange.set_sandbox_mode(True)  # enable sandbox mode
         #exchange.apiKey = test_apiKey
         #exchange.secret = test_secret
         exchange.apiKey = apiKey
         exchange.secret = secret
-        markets = exchange.load_markets()
+        markets = retry_request(lambda: exchange.load_markets(), logger)
         #BTCUSDT = exchange.markets['BTC/USDT']
         symbol = 'BTC/USDT'
         if exchange.has['fetchOHLCV']:
             time.sleep (exchange.rateLimit / 1000) # time.sleep wants seconds
-            ohlcv = exchange.fetch_ohlcv (symbol, '1d')# one day
+            ohlcv = retry_request(lambda: exchange.fetch_ohlcv (symbol, '1d'), logger)
             close = ohlcv[-1][4]
             timestamp = ohlcv[-1][0]
             date_time = pd.to_datetime(timestamp, unit='ms')
             date_time_str = date_time.strftime('%Y-%m-%d %H:%M:%S')
 
-        balance = exchange.fetchBalance()
+        balance = retry_request(exchange.fetchBalance, logger)
         total_cash_balance = balance['USDT']['total']
         total_asset_amount = balance['BTC']['total']
         if total_asset_amount > 0:
@@ -68,7 +74,7 @@ def main():
         data1 = json.dumps({"identity": username, "password": password})
         # Content-Type 请求的HTTP内容类型 application/json 将数据已json形式发给服务器
         header1 = {"Content-Type": "application/json"}
-        response1 = requests.post(auth_url, data=data1, headers=header1)
+        response1 = retry_request(lambda: requests.post(auth_url, data=data1, headers=header1), logger)
         response1_json = response1.json()
         #print('response1_json: ', response1_json)
 
@@ -89,7 +95,7 @@ def main():
             query_daily_return = "?filter(client_id=" + client_id + ")&&sort=date&&fields=date,net_asset_value,draw_down,daily_return"#&&page=50&&perPage=100&&sort=date&&skipTotal=1response1_json
             get_url = home_url + get_path + query_daily_return
             
-            response2 = requests.get(get_url, headers=header2)
+            response2 = retry_request(lambda: requests.get(get_url, headers=header2), logger)
             response2_json = response2.json()
             response2_str = str(response2_json)
             #app.logger.debug('response2_str: {}'.format(response2_str))
@@ -110,7 +116,7 @@ def main():
                     for i in range(1, total_pages + 1):
                         query_daily_return1 = "?filter(client_id=" + client_id + ")&&sort=date&&fields=date,daily_return&&page=" + str(i)#50&&perPage=100&&sort=date&&skipTotal=1response1_json
                         get_url1 = home_url + get_path + query_daily_return1
-                        response3 = requests.get(get_url1, headers=header2)
+                        response3 = retry_request(lambda: requests.get(get_url1, headers=header2), logger)
                         response3_json = response3.json()
                         response3_str = str(response3_json)
                         for item in response3_json['items']:
@@ -137,7 +143,7 @@ def main():
                         'annualized_sharpe': sharpe_ratio1}
                 data2_json = json.dumps(data2)
                 #print('data: ', data)
-            response4 = requests.post(post_url, headers=header2, data=data2_json)
+            response4 = retry_request(lambda: requests.post(post_url, headers=header2, data=data2_json), logger)
             response4_json = response4.json()
             response4_str = str(response4_json)
             if response4.status_code == 200:
@@ -146,5 +152,15 @@ def main():
                 logger.info('response4_str: ', response4_str)
 
     return
+
+def retry_request(request_func, logger, retries=2, delay=1):
+    for attempt in range(retries):
+        try:
+            return request_func()
+        except Timeout as e:
+            logger.warning(f"Request timed out: {e}. Retrying {attempt + 1}/{retries}...")
+            time.sleep(delay)
+    raise Exception("Request failed after retries")
+
 if __name__ == '__main__':
     main()
