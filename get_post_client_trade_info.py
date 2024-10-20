@@ -13,7 +13,7 @@ from requests.exceptions import Timeout
 def main():
 
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)#DEBUG
 
     logger = logging.getLogger(__name__)
     username = os.environ.get('admin_username')
