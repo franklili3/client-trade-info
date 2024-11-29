@@ -8,7 +8,7 @@ ccxt==4.3.85
 certifi==2024.7.4
 cffi==1.17.0
 charset-normalizer==3.3.2
-cryptography==43.0.0
+cryptography==43.0.1
 frozenlist==1.4.1
 idna==3.7
 multidict==6.0.5
