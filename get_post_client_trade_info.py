@@ -119,7 +119,7 @@ def main():
                         response3 = retry_request(lambda: requests.get(get_url1, headers=header2), logger)
                         response3_json = response3.json()
                         response3_str = str(response3_json)
-                        print('response3_str[0:100]: ', response3_str[0:100])
+                        #print('response3_str[0:100]: ', response3_str[0:100])
                         for item in response3_json['items']:
                             getted_datas['date'].append(item['date'])
                             getted_datas['net_asset_value'].append(item['net_asset_value'])
