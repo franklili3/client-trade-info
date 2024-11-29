@@ -114,7 +114,7 @@ def main():
                         getted_datas['daily_return'].append(item['daily_return'])
                 elif total_pages > 1:
                     for i in range(1, total_pages + 1):
-                        query_daily_return1 = "?filter(client_id=" + client_id + ")&&sort=date&&fields=date,daily_return&&page=" + str(i)#50&&perPage=100&&sort=date&&skipTotal=1response1_json
+                        query_daily_return1 = "?filter(client_id=" + client_id + ")&&sort=date&&fields=date,daily_return,net_asset_value&&page=" + str(i)#50&&perPage=100&&sort=date&&skipTotal=1response1_json
                         get_url1 = home_url + get_path + query_daily_return1
                         response3 = retry_request(lambda: requests.get(get_url1, headers=header2), logger)
                         response3_json = response3.json()
