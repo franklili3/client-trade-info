@@ -46,7 +46,7 @@ def main():
         #exchange.secret = test_secret
         exchange.apiKey = apiKey
         exchange.secret = secret
-        markets = retry_request(lambda: exchange.load_markets(), logger)
+        #markets = retry_request(lambda: exchange.load_markets(), logger)
         #BTCUSDT = exchange.markets['BTC/USDT']
         symbol = 'BTC/USDT'
         if exchange.has['fetchOHLCV']:
